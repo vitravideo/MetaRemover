@@ -1,20 +1,35 @@
-import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg/dist/esm';
-import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
+
+const ffmpegCorePath = 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js';
+
+let ffmpeg;
+let createFFmpeg, fetchFile;
 
 export default function Home() {
   const [video, setVideo] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState('');
 
-  const ffmpeg = createFFmpeg({ log: true });
+  useEffect(() => {
+    (async () => {
+      const ffmpegModule = await import('@ffmpeg/ffmpeg');
+      createFFmpeg = ffmpegModule.createFFmpeg;
+      fetchFile = ffmpegModule.fetchFile;
 
-  const load = async () => {
-    await ffmpeg.load();
-  };
+      ffmpeg = createFFmpeg({
+        corePath: ffmpegCorePath,
+        log: true,
+      });
+
+      await ffmpeg.load();
+    })();
+  }, []);
 
   const removeMetadata = async () => {
+    if (!video || !ffmpeg) return;
+
     setProcessing(true);
-    await load();
     ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(video));
     await ffmpeg.run('-i', 'input.mp4', '-map_metadata', '-1', '-c:v', 'copy', '-c:a', 'copy', 'output.mp4');
     const data = ffmpeg.FS('readFile', 'output.mp4');
