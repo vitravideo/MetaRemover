@@ -18,10 +18,15 @@ export default function Home() {
 
       ffmpeg = createFFmpeg({
         log: true,
-        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+        corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
       });
-      await ffmpeg.load();
-      setReady(true);
+
+      try {
+        await ffmpeg.load();
+        setReady(true);
+      } catch (error) {
+        console.error('FFmpeg failed to load:', error);
+      }
     };
     load();
   }, []);
